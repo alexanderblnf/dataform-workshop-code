@@ -1,0 +1,2 @@
+google-cloud-core==1.7.2
+kfp==1.4.0

@@ -1,0 +1,4 @@
+kubeflow_pipelines/pipeline/pipeline-packages/*
+kubeflow_pipelines/pipeline/pipeline-packages-ai-platform/*
+**__pycache__**
+.DS_Store
