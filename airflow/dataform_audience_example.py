@@ -13,7 +13,7 @@ default_args = {
 }
 
 # Repository URL containing the dataform project
-REPO_URL: str = "https://github.com/alexanderblnf/dataform-workshop-sample"
+REPO_URL: str = "https://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:x-oauth-basic@github.com/alexanderblnf/dataform-workshop-project"
 
 # Secret Manager Credentials name
 CREDENTIALS_SECRET_NAME = "dataform_credentials"
@@ -181,7 +181,7 @@ def run_audience_example():
 
     @task()
     def upload_repo_to_gcs():
-        # TODO 1: Clone the repo, add the credentials and edit the config file. 
+        # TODO 1: Clone the repo, add the credentials and edit the config file.
         # Example value can be added as a global variable
         # TODO 2: Add the repo to GCS. BE MINDFUL OF THE AUTHOR!
 

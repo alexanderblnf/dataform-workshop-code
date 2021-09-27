@@ -16,7 +16,7 @@ default_args = {
 }
 
 # Repository URL containing the dataform project
-REPO_URL: str = "https://github.com/alexanderblnf/dataform-workshop-sample"
+REPO_URL: str = "https://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:x-oauth-basic@github.com/alexanderblnf/dataform-workshop-project"
 
 # Secret Manager Credentials name
 CREDENTIALS_SECRET_NAME = "dataform_credentials"
