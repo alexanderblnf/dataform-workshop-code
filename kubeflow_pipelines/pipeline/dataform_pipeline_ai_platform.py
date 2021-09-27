@@ -13,26 +13,33 @@ from kfp.compiler import Compiler
 _, PROJECT_ID = google.auth.default()
 GCR_IMAGE_FOLDER = 'dataform-basic-example'
 KFP_ROOT_GCS_PATH = f"gs://{PROJECT_ID}-staging/kfp"
-GCP_REGION = "europe-west4"
-PIPELINE_HOST = "https://2bb39853f6fbed9-dot-europe-west1.pipelines.googleusercontent.com/"
+
+REPO_URL = "https://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:x-oauth-basic@github.com/alexanderblnf/dataform-workshop-project"
+
+PIPELINE_HOST = "https://6ed70044c47c016d-dot-europe-west1.pipelines.googleusercontent.com/"
+GCS_BUCKET = f"{PROJECT_ID}-dataform-build"
+
+global author
 
 
 def load_repo_and_edit_config_op(
     repo_url: str,
-    start_date: str,
+    example_value: str,
     output_gcs_bucket: str,
-    output_gcs_prefix: str,
+    output_gcs_prefix: str
 ):
     return kfp.dsl.ContainerOp(
         name="save_dataform_repo_to_gcs",
         image=(
-            f"eu.gcr.io/{PROJECT_ID}/kfp/{GCR_IMAGE_FOLDER}/components/load-dataform-gcs:latest"
+            f"eu.gcr.io/{PROJECT_ID}/kfp/{GCR_IMAGE_FOLDER}/{author}/"
+            "components/load-dataform-gcs-{author}:latest"
         ),
         arguments=[
             "--repo-url",
             repo_url,
-            "--start-date",
-            start_date,
+            "--example-value",
+            example_value,
+            # TODO: Add author param
             "--output-gcs-bucket",
             output_gcs_bucket,
             "--output-gcs-prefix",
@@ -42,6 +49,7 @@ def load_repo_and_edit_config_op(
 
 
 def run_dataform_op(
+    project_id: str,
     input_gcs_bucket: str,
     input_gcs_prefix: str
 ):
@@ -57,9 +65,11 @@ def run_dataform_op(
         name="run_dataform_example",
         image=(
             f"eu.gcr.io/{PROJECT_ID}/kfp/{GCR_IMAGE_FOLDER}/"
-            "components/run-dataform-example:latest"
+            f"{author}/components/run-dataform-example-{author}:latest"
         ),
         arguments=[
+            "--project-id",
+            project_id,
             "--input-gcs-bucket",
             input_gcs_bucket,
             "--input-gcs-prefix",
@@ -73,25 +83,26 @@ def run_dataform_op(
     description='This pipeline loads a dataform project from Github and runs it.'
 )
 def dataform_simple_example_pipeline(
-    repo_url: str = "https://github.com/alexanderblnf/dataform-workshop-sample",
-    output_gcs_bucket: str = "mms-dataform-builds",
+    repo_url: str = REPO_URL,
+    example_value: str = "ai-platform-example-value",
+    output_gcs_bucket: str = GCS_BUCKET,
     output_gcs_prefix: str = "dataform_folder",
+    # TODO: Add author param
 ):
     # 1. Load training data from BigQuery
     load_repo_and_edit_config_step = load_repo_and_edit_config_op(
         repo_url=repo_url,
-        start_date="test",
+        example_value=example_value,
         output_gcs_bucket=output_gcs_bucket,
-        output_gcs_prefix=output_gcs_prefix
+        output_gcs_prefix=f"{author}/{output_gcs_prefix}"
     ).set_display_name('Load Repository and Save to GCS Bucket')
     load_repo_and_edit_config_step.execution_options.caching_strategy.max_cache_staleness = "P0D"
 
     # 2. Validate training data
     run_dataform_step = run_dataform_op(
-        # input_gcs_bucket=load_repo_and_edit_config_step.outputs['output_gcs_buckest'],
-        # input_gcs_prefix=load_repo_and_edit_config_step.outputs['output_gcs_prefix']
+        project_id=PROJECT_ID,
         input_gcs_bucket=output_gcs_bucket,
-        input_gcs_prefix=output_gcs_prefix
+        input_gcs_prefix=f"{author}/{output_gcs_prefix}"
     ).after(load_repo_and_edit_config_step).set_display_name('Run Dataform example')
     run_dataform_step.execution_options.caching_strategy.max_cache_staleness = "P0D"
 
@@ -116,29 +127,26 @@ def compile_and_upload_pipeline():
     try:
         client.upload_pipeline(
             str(pipeline_package_path),
-            pipeline_name="Dataform Simple Example",
+            pipeline_name=f"Dataform Simple Example - {author}",
             description="Pipeline that runs Dataform"
         )
     except Exception:
         client.upload_pipeline_version(
             str(pipeline_package_path),
-            pipeline_name="Dataform Simple Example",
-            pipeline_version_name=str(current_date_and_time)
+            pipeline_name=f"Dataform Simple Example - {author}",
+            pipeline_version_name=f"{str(current_date_and_time)}-{author}"
         )
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--mode",
-        help=("Mode to use the pipeline with. "
-              "'run' submit a pipeline job and 'compile' compiles and uploads "
-              "the pipeline"),
-        choices=['compile', 'run'],
-        default='compile',
+        "--author",
+        help=("Author of the pipeline."),
         type=str,
+        required=True
     )
     logging.basicConfig(level=logging.INFO)
     args = parser.parse_args()
-    if args.mode == 'compile':
-        compile_and_upload_pipeline()
+    author = args.author
+    compile_and_upload_pipeline()

@@ -1,18 +1,15 @@
 import shutil
 import json
 from pathlib import Path
-
-import google.auth
 from google.cloud import storage
 
 from src.secret_helper import SecretManagerHelper
 
 CREDENTIALS_SECRET_NAME = "dataform_credentials"
-_, PROJECT_ID = google.auth.default()
 
 
-def create_credentials_file(base_path: Path):
-    secret_manager_helper = SecretManagerHelper(PROJECT_ID)
+def create_credentials_file(project_id: str, base_path: Path):
+    secret_manager_helper = SecretManagerHelper(project_id=project_id)
     credentials = json.loads(
         secret_manager_helper.get_secret(CREDENTIALS_SECRET_NAME)
     )
@@ -23,6 +20,7 @@ def create_credentials_file(base_path: Path):
 
 
 def download_folder_from_gcs_and_return_base_path(
+    project_id: str,
     gcs_bucket: str,
     gcs_prefix: str,
     local_destination_path: Path
@@ -45,6 +43,6 @@ def download_folder_from_gcs_and_return_base_path(
 
         blob.download_to_filename(file_path)
 
-    create_credentials_file(base_path)
+    create_credentials_file(project_id, base_path)
 
     return base_path

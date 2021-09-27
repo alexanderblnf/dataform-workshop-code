@@ -13,11 +13,13 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--start-date",
-        help="Start date",
+        "--example-value",
+        help="Example value",
         type=str,
         required=True
     )
+
+    # TODO: Add author param
 
     parser.add_argument(
         "--output-gcs-bucket",
@@ -33,8 +35,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    # TODO: Add author
     dataform_vars = {
-        "startDate": args.start_date
+        "exampleValue": args.example_value
     }
 
     clone_repo_and_save_to_gcs(

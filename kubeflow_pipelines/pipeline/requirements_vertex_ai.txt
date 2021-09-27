@@ -1,2 +1,5 @@
 google-cloud-core==1.7.2
 kfp==1.8.2
+google-cloud-storage==1.42.2
+google-cloud-secret-manager==2.7.1
+google-auth==2.1.0
