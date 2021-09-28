@@ -84,9 +84,10 @@ def download_gcs_file(project_id: str, bucket: str, path: str):
     storage_client = storage.Client(project_id)
     bucket = storage_client.get_bucket(bucket)
     blob = bucket.blob(path)
-
+    blob_content = blob.download_as_text()
+    print(blob_content)
     # Download the contents of the blob as a string and then parse it using json.loads() method
-    return json.loads(blob.download_as_string(client=None))
+    return json.loads(blob_content)
 
 
 def execute_dataform_run_alexb(event: dict, _):
@@ -96,13 +97,12 @@ def execute_dataform_run_alexb(event: dict, _):
     """
     bucket = event['bucket']
     path = event['name']
-    print(event)
 
-    if AUTHOR in path:
+    if AUTHOR in path and path.endswith('.json'):
         json_content = download_gcs_file(
             project_id=PROJECT_ID,
             bucket=bucket,
             path=path
         )
         print(json_content)
-    # DataformAPIHelper(PROJECT_ID, DATAFORM_PROJECT_ID).execute_run()
+        DataformAPIHelper(PROJECT_ID, DATAFORM_PROJECT_ID).execute_run()

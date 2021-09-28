@@ -9,11 +9,22 @@ import google.auth
 import kfp
 from kfp.v2 import compiler
 from kfp.v2.google.client import AIPlatformClient
+from secret_helper import SecretManagerHelper
 
 
 _, PROJECT_ID = google.auth.default()
 GCR_IMAGE_FOLDER = 'dataform-basic-example'
-REPO_URL = "https://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:x-oauth-basic@github.com/alexanderblnf/dataform-workshop-project"
+
+GITHUB_CREDENTIALS_SECRET_NAME = "workshop_github_access_token"
+GITHUB_ACCESS_TOKEN = (
+    SecretManagerHelper(PROJECT_ID)
+    .get_secret(GITHUB_CREDENTIALS_SECRET_NAME)
+)
+REPO_URL = (
+    f"https://{GITHUB_ACCESS_TOKEN}:"
+    "x-oauth-basic@github.com/alexanderblnf/dataform-workshop-project"
+)
+
 KFP_ROOT_GCS_PATH = f"gs://{PROJECT_ID}-staging/kfp/vertex-ai"
 GCP_REGION = "europe-west4"
 GCS_BUCKET = f"{PROJECT_ID}-dataform-build"
@@ -111,7 +122,8 @@ def compile_and_upload_pipeline():
 
     api_client.create_run_from_job_spec(
         str(pipeline_package_path),
-        pipeline_root=KFP_ROOT_GCS_PATH
+        pipeline_root=KFP_ROOT_GCS_PATH,
+        enable_caching=False
     )
 
 

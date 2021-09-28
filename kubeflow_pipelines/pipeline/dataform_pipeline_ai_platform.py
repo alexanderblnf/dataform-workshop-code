@@ -8,13 +8,22 @@ from datetime import datetime
 import google.auth
 import kfp
 from kfp.compiler import Compiler
+from secret_helper import SecretManagerHelper
 
 
 _, PROJECT_ID = google.auth.default()
 GCR_IMAGE_FOLDER = 'dataform-basic-example'
 KFP_ROOT_GCS_PATH = f"gs://{PROJECT_ID}-staging/kfp"
 
-REPO_URL = "https://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:x-oauth-basic@github.com/alexanderblnf/dataform-workshop-project"
+GITHUB_CREDENTIALS_SECRET_NAME = "workshop_github_access_token"
+GITHUB_ACCESS_TOKEN = (
+    SecretManagerHelper(PROJECT_ID)
+    .get_secret(GITHUB_CREDENTIALS_SECRET_NAME)
+)
+REPO_URL = (
+    f"https://{GITHUB_ACCESS_TOKEN}:"
+    "x-oauth-basic@github.com/alexanderblnf/dataform-workshop-project"
+)
 
 PIPELINE_HOST = "https://6ed70044c47c016d-dot-europe-west1.pipelines.googleusercontent.com/"
 GCS_BUCKET = f"{PROJECT_ID}-dataform-build"
@@ -32,7 +41,7 @@ def load_repo_and_edit_config_op(
         name="save_dataform_repo_to_gcs",
         image=(
             f"eu.gcr.io/{PROJECT_ID}/kfp/{GCR_IMAGE_FOLDER}/{author}/"
-            "components/load-dataform-gcs-{author}:latest"
+            f"components/load-dataform-gcs-{author}:latest"
         ),
         arguments=[
             "--repo-url",
@@ -53,14 +62,6 @@ def run_dataform_op(
     input_gcs_bucket: str,
     input_gcs_prefix: str
 ):
-    """ContainerOp to preprocess training data.
-
-        Args:
-            training_data_source_gcs_path (str): Cloud Storage path where
-                the raw training data is stored.
-            output (str): Local output path that contains the return values.
-        """
-
     return kfp.dsl.ContainerOp(
         name="run_dataform_example",
         image=(
@@ -89,7 +90,7 @@ def dataform_simple_example_pipeline(
     output_gcs_prefix: str = "dataform_folder",
     # TODO: Add author param
 ):
-    # 1. Load training data from BigQuery
+    # 1. Load component 1
     load_repo_and_edit_config_step = load_repo_and_edit_config_op(
         repo_url=repo_url,
         example_value=example_value,
@@ -98,7 +99,7 @@ def dataform_simple_example_pipeline(
     ).set_display_name('Load Repository and Save to GCS Bucket')
     load_repo_and_edit_config_step.execution_options.caching_strategy.max_cache_staleness = "P0D"
 
-    # 2. Validate training data
+    # 2. Load component 2
     run_dataform_step = run_dataform_op(
         project_id=PROJECT_ID,
         input_gcs_bucket=output_gcs_bucket,
