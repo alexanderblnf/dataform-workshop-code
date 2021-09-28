@@ -131,7 +131,8 @@ class LocalDiskHelper:
     'dataform_simple_example',
     default_args=default_args,
     schedule_interval=None,
-    tags=['dataform_example']
+    tags=['dataform_example'],
+    start_date=days_ago(2),
 )
 def run_basic_example():
 
