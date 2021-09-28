@@ -70,6 +70,7 @@ class DataformAPIHelper:
         response = requests.get(run_url, headers=self.headers)
 
         while response.json()['status'] == 'RUNNING':
+            # Check every 5 seconds
             time.sleep(5)
             response = requests.get(run_url, headers=self.headers)
             logging.warning(response.json())
@@ -98,6 +99,7 @@ def execute_dataform_run_alexb(event: dict, _):
     bucket = event['bucket']
     path = event['name']
 
+    # Check that file is in the AUTHOR folder and it's of JSON format
     if AUTHOR in path and path.endswith('.json'):
         json_content = download_gcs_file(
             project_id=PROJECT_ID,
