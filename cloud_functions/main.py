@@ -59,6 +59,7 @@ class DataformAPIHelper:
     def trigger_run(self):
         response = requests.post(
             url=self.base_url,
+            # TODO: Add tags
             data="{}",
             headers=self.headers
         )
@@ -106,5 +107,6 @@ def execute_dataform_run_alexb(event: dict, _):
             bucket=bucket,
             path=path
         )
+        # TODO: Add tags to the API Helper
         print(json_content)
         DataformAPIHelper(PROJECT_ID, DATAFORM_PROJECT_ID).execute_run()
